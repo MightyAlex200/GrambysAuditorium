@@ -1,0 +1,149 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gramby's Auditorium</title>
+<script>
+const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+function strToMap(str, startingNote, startingOctave) {
+    startingNote = startingNote || 0;
+    startingOctave = startingOctave || 0;
+    let map = {};
+    for (let i = 0; i < str.length; i++) {
+        map[str[i]] = [Math.floor(i / 12 + startingOctave), (i + startingNote) % 12];
+    }
+    return map;
+}
+
+function pitchToName([octave, note]) {
+    const name = noteNames[note];
+    if (!name) throw new Error(`Invalid note ${note}`);
+    return name + octave;
+}
+
+function pitchToGramby([octave, note]) {
+    for (const key in grambyMap) {
+        const other = grambyMap[key];
+        if (other[0] == octave && other[1] == note) {
+            return key;
+        }
+    }
+    throw new Error(`Failed to convert pitch ${pitchToName([octave, note])} to Gramby notation`);
+}
+
+function transposeOctave([octave, note], by) {
+    return [octave + by, note];
+}
+
+function convert(map, sheet) {
+    let pitches = sheet.map(note => {
+        const pitch = map[note];
+        if (!pitch) throw new Error(`Unknown note ${note}`);
+        return pitch;
+    });
+    let err;
+    for (let tooLow = false; !tooLow; tooLow = pitches.some(pitch => pitch[0] < 0)) {
+        try {
+            return pitches.map(pitchToGramby);
+        } catch(e) {
+            err = e;
+            pitches = pitches.map(pitch => transposeOctave(pitch, -1));
+        }
+    }
+    throw err;
+}
+
+const virtualPianoMap = strToMap("1!2@34$5%6^78*9(0qQwWeErtTyYuiIoOpPasSdDfgGhHjJklLzZxcCvVbBnm");
+const recursiveArtsVirtualPianoReal = strToMap(">1q2we4r5t6yu8i9opazsxdcvgbhnmk,l.;/ ");
+const onlinePianistVirtualPianoReal = strToMap("q2w3er5t6y7ui9o0pzsxdcfvbhnjm,l.;/'");
+const maps = {
+    virtualPiano: virtualPianoMap,
+    recursiveArts: recursiveArtsVirtualPianoReal,
+    onlinePianist: onlinePianistVirtualPianoReal,
+};
+
+const grambyMap = strToMap("zsxdcvgbhnjmqlw;er5t6y7ui9o0p[=]<\\");
+
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("inputform");
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const pianomap = document.getElementById("pianomap");
+    form.addEventListener("submit", function(e) {
+        const map = maps[pianomap.value];
+        try {
+            output.value = convert(map, input.value.split('')).join('');
+        } catch(e) {
+            output.value = `Error while converting! ${e}\n\nDoes your song span too many octaves?`;
+        }
+        e.preventDefault();
+    });
+});
+</script>
+<style>
+body {
+    background: #ab6f31;
+    color: white;
+    font-family: sans-serif;
+}
+
+code {
+    background: lightgrey;
+    padding: 2px;
+    border-radius: 5px;
+    color: black;
+}
+
+#container {
+    background: #e78827;
+    text-align: center;
+    width: 50%;
+    margin: 64px auto;
+    padding: 16px;
+    border: 10px solid white;
+    border-radius: 16px;
+}
+
+#flexcontainer {
+    display: flex;
+}
+
+#flexcontainer, * {
+    flex-grow: 1;
+}
+
+textarea {
+    width: 320px;
+    height: 160px;
+}
+</style>
+</head>
+<body>
+<div id="container">
+    <h1>Gramby's Auditorium</h1>
+    <div id="flexcontainer">
+        <form id="inputform">
+            <label for="pianomap">Piano mapping:</label>
+            <select name="pianomap" id="pianomap">
+                <option value="virtualPiano">virtualpiano.net</option>
+                <option value="recursiveArts">recursivearts.com/virtual-piano</option>
+                <option value="onlinePianist">onlinepianist.com/virtual-piano</option>
+            </select>
+            <br>
+            <label for="input">Input sheet music:</label>
+            <br>
+            <textarea spellcheck="false" name="input" id="input" required></textarea>
+            <br>
+            <input type="submit" value="Convert"> 
+        </form>
+        <div>
+            <label for="output">Output:</label>
+            <br>
+            <textarea spellcheck="false" id="output" readonly></textarea>
+            <br>
+            Note: <code>&lt;</code> is the code for backspace.
+        </div>
+    </div>
+</div>
+</body>
+</html>
