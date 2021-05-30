@@ -69,14 +69,30 @@ document.addEventListener("DOMContentLoaded", function() {
     const input = document.getElementById("input");
     const output = document.getElementById("output");
     const pianomap = document.getElementById("pianomap");
+    const outType = document.getElementById("outputType");
     form.addEventListener("submit", function(e) {
         const map = maps[pianomap.value];
+        const oT = outType.value
+        var photoCode = convert(map, input.value.split('')).join('');
+        var work = 0
         try {
-            output.value = convert(map, input.value.split('')).join('');
+            output.value = photoCode;
+            work = 1
         } catch(e) {
             output.value = `Error while converting! ${e}\n\nDoes your song span too many octaves?`;
+            work = 0
         }
         e.preventDefault();
+        if (oT == "regular") {
+            output.value = convert(map, input.value.split('')).join('');  
+        } else {
+            photoCode = '[["PolaroidPhoto",[],{"Phrase":"' + convert(map, input.value.split('')).join('') + '"}]]';
+            photoCode = btoa(photoCode)
+            if (work == 1) {
+                output.value = photoCode;
+            }
+        }
+        work = 0
     });
 });
 </script>
@@ -137,9 +153,17 @@ textarea {
             <input type="submit" value="Convert"> 
         </form>
         <div>
+            <label for="outputType">Output type:</label>
+                <select name="outputType" id="outputType">
+                <option value="regular">Regular</option>
+                <option value="photo">Photo</option>
+            </select>
+            <br>
             <label for="output">Output:</label>
             <br>
             <textarea spellcheck="false" id="output" readonly></textarea>
+            <br>
+            "Photo" Output outputs code for a polaroid photo that can be spawned in and used as a sheet.
             <br>
             Note: <code>&lt;</code> is the code for backspace.
         </div>
