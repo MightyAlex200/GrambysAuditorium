@@ -74,18 +74,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const map = maps[pianomap.value];
         const oT = outType.value
         var photoCode = convert(map, input.value.split('')).join('');
+        if (oT == "photo") {
+                photoCode = '[["PolaroidPhoto",[],{"Phrase":"' + convert(map, input.value.split('')).join('') + '"}]]';
+                photoCode = btoa(photoCode)
+        }
         try {
             output.value = photoCode;
         } catch(e) {
             output.value = `Error while converting! ${e}\n\nDoes your song span too many octaves?`;
-            oT += "errorLOL"
         }
         e.preventDefault();
-        if (oT == "photo") {
-            photoCode = '[["PolaroidPhoto",[],{"Phrase":"' + convert(map, input.value.split('')).join('') + '"}]]';
-            photoCode = btoa(photoCode)
-            output.value = photoCode;
-        }
         
     });
 });
